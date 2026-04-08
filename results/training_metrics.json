@@ -1,0 +1,40 @@
+{
+  "test_accuracy": 0.7698081731796265,
+  "dataset_rows": 6000,
+  "window_size": 10,
+  "feature_count": 6,
+  "model": "GlobalAveragePooling1D + Dense(3 logits)",
+  "classification_report": {
+    "ON": {
+      "precision": 0.5367965367965368,
+      "recall": 0.6326530612244898,
+      "f1-score": 0.5807962529274004,
+      "support": 196.0
+    },
+    "OFF": {
+      "precision": 0.8254132231404959,
+      "recall": 0.8907469342251951,
+      "f1-score": 0.8568364611260053,
+      "support": 897.0
+    },
+    "DELAY": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1-score": 0.0,
+      "support": 106.0
+    },
+    "accuracy": 0.7698081734778982,
+    "macro avg": {
+      "precision": 0.45406991997901097,
+      "recall": 0.5077999984832283,
+      "f1-score": 0.4792109046844686,
+      "support": 1199.0
+    },
+    "weighted avg": {
+      "precision": 0.7052608693654263,
+      "recall": 0.7698081734778982,
+      "f1-score": 0.7359619442900728,
+      "support": 1199.0
+    }
+  }
+}

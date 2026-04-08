@@ -65,10 +65,11 @@ enum DecisionClass : int {
   DECISION_DELAY = 2,
 };
 
-// Copy values from artifacts/scaler_params.npz after training for best performance.
-// These defaults are safe placeholders.
-float kFeatureMean[kFeatureCount] = {0.5f, 0.4f, 0.5f, 0.5f, 0.2f, 0.2f};
-float kFeatureStd[kFeatureCount] = {0.29f, 0.49f, 0.28f, 0.50f, 0.21f, 0.24f};
+// Trained scaler params from artifacts/scaler_params.npz.
+float kFeatureMean[kFeatureCount] = {
+    0.48298612f, 0.37700000f, 0.48419288f, 0.17533334f, 0.41976389f, 0.15008651f};
+float kFeatureStd[kFeatureCount] = {
+    0.29454917f, 0.48463491f, 0.32421991f, 0.38025197f, 0.45832303f, 0.22055806f};
 
 // -----------------------------
 // Sensor/Control State

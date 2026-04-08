@@ -1,0 +1,8 @@
+{
+  "model_path": "artifacts/smart_load_cnn_int8.tflite",
+  "header_path": "artifacts/model.h",
+  "size_bytes": 1696,
+  "size_kb": 1.6562,
+  "target_max_bytes": 2048,
+  "within_budget": true
+}
