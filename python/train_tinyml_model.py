@@ -16,6 +16,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 import tensorflow as tf
+from sklearn.metrics import classification_report
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 
@@ -26,6 +27,8 @@ tf.random.set_seed(SEED)
 
 ARTIFACTS_DIR = Path("artifacts")
 ARTIFACTS_DIR.mkdir(parents=True, exist_ok=True)
+RESULTS_DIR = Path("results")
+RESULTS_DIR.mkdir(parents=True, exist_ok=True)
 
 FEATURE_COLUMNS = [
     "time_of_day",
@@ -186,7 +189,7 @@ def main() -> None:
     model = build_model(input_shape=(WINDOW_SIZE, len(FEATURE_COLUMNS)))
     model.summary()
 
-    model.fit(
+    history = model.fit(
         x_train,
         y_train,
         epochs=20,
@@ -198,6 +201,18 @@ def main() -> None:
     _, test_acc = model.evaluate(x_test, y_test, verbose=0)
     print(f"Test Accuracy: {test_acc * 100:.2f}%")
 
+    y_test_true = np.argmax(y_test, axis=1)
+    y_test_logits = model.predict(x_test, verbose=0)
+    y_test_pred = np.argmax(y_test_logits, axis=1)
+    class_report = classification_report(
+        y_test_true,
+        y_test_pred,
+        labels=[0, 1, 2],
+        target_names=["ON", "OFF", "DELAY"],
+        output_dict=True,
+        zero_division=0,
+    )
+
     model.save(ARTIFACTS_DIR / "smart_load_cnn.keras")
     np.savez(
         ARTIFACTS_DIR / "scaler_params.npz",
@@ -208,12 +223,47 @@ def main() -> None:
     with open(ARTIFACTS_DIR / "label_map.json", "w", encoding="utf-8") as f:
         json.dump(ID_TO_LABEL, f, indent=2)
 
+    history_df = pd.DataFrame(history.history)
+    history_df.to_csv(RESULTS_DIR / "training_history.csv", index=False)
+
+    metrics_payload = {
+        "test_accuracy": float(test_acc),
+        "dataset_rows": int(len(df)),
+        "window_size": WINDOW_SIZE,
+        "feature_count": len(FEATURE_COLUMNS),
+        "model": "GlobalAveragePooling1D + Dense(3 logits)",
+        "classification_report": class_report,
+    }
+    with open(RESULTS_DIR / "training_metrics.json", "w", encoding="utf-8") as f:
+        json.dump(metrics_payload, f, indent=2)
+
+    obs_lines = [
+        "# Training Observations",
+        "",
+        f"- Dataset rows: {len(df)}",
+        f"- Sequence length: {WINDOW_SIZE}",
+        f"- Test accuracy: {test_acc * 100:.2f}%",
+        f"- Best val_accuracy: {history_df['val_accuracy'].max() * 100:.2f}%",
+        f"- Final train loss: {history_df['loss'].iloc[-1]:.4f}",
+        f"- Final val loss: {history_df['val_loss'].iloc[-1]:.4f}",
+        "",
+        "## Per-Class F1",
+        f"- ON: {class_report['ON']['f1-score']:.3f}",
+        f"- OFF: {class_report['OFF']['f1-score']:.3f}",
+        f"- DELAY: {class_report['DELAY']['f1-score']:.3f}",
+    ]
+    (RESULTS_DIR / "training_observations.md").write_text("\n".join(obs_lines) + "\n", encoding="utf-8")
+
     print("Saved artifacts:")
     print("- artifacts/smart_load_cnn.keras")
     print("- artifacts/scaler_params.npz")
     print("- artifacts/representative_data.npy")
     print("- artifacts/label_map.json")
     print("- artifacts/simulated_dataset.csv")
+    print("Saved results:")
+    print("- results/training_history.csv")
+    print("- results/training_metrics.json")
+    print("- results/training_observations.md")
 
 
 if __name__ == "__main__":

@@ -10,12 +10,14 @@ Part 3 from requested workflow:
 from __future__ import annotations
 
 from pathlib import Path
+import json
 
 import numpy as np
 import tensorflow as tf
 
 
 ARTIFACTS_DIR = Path("artifacts")
+RESULTS_DIR = Path("results")
 MODEL_PATH = ARTIFACTS_DIR / "smart_load_cnn.keras"
 REP_DATA_PATH = ARTIFACTS_DIR / "representative_data.npy"
 TFLITE_PATH = ARTIFACTS_DIR / "smart_load_cnn_int8.tflite"
@@ -73,14 +75,42 @@ const unsigned int g_smart_load_model_len = {len(model_bytes)};
 
 def main():
     ARTIFACTS_DIR.mkdir(parents=True, exist_ok=True)
+    RESULTS_DIR.mkdir(parents=True, exist_ok=True)
     model_bytes = export_tflite_int8()
     write_c_header(model_bytes, HEADER_PATH)
 
     size_kb = len(model_bytes) / 1024.0
     size_bytes = len(model_bytes)
+    within_budget = size_bytes <= TARGET_MAX_BYTES
+
+    report = {
+        "model_path": str(TFLITE_PATH),
+        "header_path": str(HEADER_PATH),
+        "size_bytes": size_bytes,
+        "size_kb": round(size_kb, 4),
+        "target_max_bytes": TARGET_MAX_BYTES,
+        "within_budget": within_budget,
+    }
+    with open(RESULTS_DIR / "conversion_report.json", "w", encoding="utf-8") as f:
+        json.dump(report, f, indent=2)
+
+    report_md = [
+        "# Conversion Observations",
+        "",
+        f"- Model file: `{TFLITE_PATH}`",
+        f"- Header file: `{HEADER_PATH}`",
+        f"- Model size: {size_bytes} bytes ({size_kb:.2f} KB)",
+        f"- Target: <= {TARGET_MAX_BYTES} bytes",
+        f"- Result: {'PASS' if within_budget else 'FAIL'}",
+    ]
+    (RESULTS_DIR / "conversion_observations.md").write_text("\n".join(report_md) + "\n", encoding="utf-8")
+
     print(f"TFLite model written: {TFLITE_PATH}")
     print(f"C header written:   {HEADER_PATH}")
     print(f"Model size: {size_kb:.2f} KB ({size_bytes} bytes)")
+    print("Saved results:")
+    print("- results/conversion_report.json")
+    print("- results/conversion_observations.md")
     if size_bytes > TARGET_MAX_BYTES:
         print(f"FAIL: Model exceeds strict 2KB target ({TARGET_MAX_BYTES} bytes).")
         raise SystemExit(2)

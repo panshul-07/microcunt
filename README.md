@@ -13,6 +13,7 @@ This repository contains a complete TinyML workflow for an ESP32-based smart loa
 - `python/convert_to_tflite.py`: INT8 quantization, `.tflite` export, C header export.
 - `firmware/esp32_smart_load_scheduler.ino`: full ESP32 firmware (RTC + PIR + LDR + ACS712 + relay + TFLM inference).
 - `firmware/model.h`: example header (replace with generated header after conversion).
+- `results/`: saved observations and reports from training/conversion runs.
 
 ## Quick Start
 
@@ -43,6 +44,12 @@ cp artifacts/model.h firmware/model.h
 ```
 
 5. Build/upload `firmware/esp32_smart_load_scheduler.ino` in Arduino IDE (ESP32 board).
+
+6. Check observations:
+
+```bash
+ls results
+```
 
 ## Notes
 
